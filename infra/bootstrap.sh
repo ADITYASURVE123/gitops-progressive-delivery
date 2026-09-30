@@ -155,7 +155,7 @@ setup_components() {
 
     # Install cert-manager for TLS
     log_info "Installing cert-manager..."
-    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v${CERT_MANAGER_VERSION}/cert-manager.yaml
+    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml
     kubectl -n cert-manager wait deployment cert-manager --for condition=available --timeout=300s
     kubectl -n cert-manager wait deployment cert-manager-cainjector --for condition=available --timeout=300s
 
@@ -166,12 +166,12 @@ setup_components() {
 
     # Install Argo CD
     log_info "Installing Argo CD..."
-    kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-cd/v${ARGOCD_VERSION}/manifests/install.yaml
+    kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-cd/${ARGOCD_VERSION}/manifests/install.yaml
     kubectl -n argocd wait deployment argocd-server --for condition=available --timeout=300s
 
     # Install Argo Rollouts
     log_info "Installing Argo Rollouts..."
-    kubectl apply -f https://github.com/argoproj/argo-rollouts/releases/download/v${ARGOROLLOUTS_VERSION}/install.yaml
+    kubectl apply -f https://github.com/argoproj/argo-rollouts/releases/download/${ARGOROLLOUTS_VERSION}/install.yaml
     kubectl -n argo-rollouts wait deployment rollout-controller --for condition=available --timeout=300s
 
     # Install Prometheus Stack

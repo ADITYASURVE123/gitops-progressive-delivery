@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/ADITYASURVE123/gitops-progressive-delivery
+    repoURL: https://github.com/gitops-progressive-delivery
     targetRevision: main
     path: gitops/overlays/prod
   destination:

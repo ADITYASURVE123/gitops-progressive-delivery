@@ -1,4 +1,4 @@
-apiVersion: argoproj.io/v1beta1
+apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: api-rollout-canary
@@ -7,11 +7,11 @@ spec:
   replicas: 3
   selector:
     matchLabels:
-      app: api
+      app: api-service
   template:
     metadata:
       labels:
-        app: api
+        app: api-service
         version: canary
     spec:
       containers:
@@ -40,64 +40,61 @@ spec:
           successThreshold: 3
   strategy:
     canary:
-      steps:
-      - setWeight: 20
-        pause: { duration: 60s }
-      - analysis:
-          templates:
-          - templateName: metric-analysis
-          args:
-          - name: service
-            value: api-canary
-          - name: metricWindow
-            value: 5m
-          - name: minSamples
-            value: "100"
-          - name: successRateThreshold
-            value: "0.99"
-          - name: latencyThreshold
-            value: "0.5"
-        pause: { duration: 60s }
-      - setWeight: 40
-        pause: { duration: 60s }
-      - analysis:
-          templates:
-          - templateName: metric-analysis
-          args:
-          - name: service
-            value: api-canary
-          - name: metricWindow
-            value: 5m
-          - name: minSamples
-            value: "100"
-          - name: successRateThreshold
-            value: "0.99"
-          - name: latencyThreshold
-            value: "0.5"
-        pause: { duration: 60s }
-      - setWeight: 60
-        pause: { duration: 60s }
-      - analysis:
-          templates:
-          - templateName: metric-analysis
-          args:
-          - name: service
-            value: api-canary
-          - name: metricWindow
-            value: 5m
-          - name: minSamples
-            value: "100"
-          - name: successRateThreshold
-            value: "0.99"
-          - name: latencyThreshold
-            value: "0.5"
-        pause: { duration: 60s }
-      - setWeight: 100
-        pause: { duration: 300s }
-      abortOnFailure: true
       maxSurge: 1
       maxUnavailable: 0
-      trafficRouting:
-        nginx:
-          stableService: api-stable-service
-          canaryService: api-canary-service
+      canaryService: api-canary-service
+      stableService: api-stable-service
+      steps:
+      - setWeight: 20
+      - pause: { duration: 60s }
+      - analysis:
+          templates:
+          - templateName: metric-analysis
+          args:
+          - name: service
+            value: api-canary
+          - name: metricWindow
+            value: 5m
+          - name: minSamples
+            value: "100"
+          - name: successRateThreshold
+            value: "0.99"
+          - name: latencyThreshold
+            value: "0.5"
+      - pause: { duration: 60s }
+      - setWeight: 40
+      - pause: { duration: 60s }
+      - analysis:
+          templates:
+          - templateName: metric-analysis
+          args:
+          - name: service
+            value: api-canary
+          - name: metricWindow
+            value: 5m
+          - name: minSamples
+            value: "100"
+          - name: successRateThreshold
+            value: "0.99"
+          - name: latencyThreshold
+            value: "0.5"
+      - pause: { duration: 60s }
+      - setWeight: 60
+      - pause: { duration: 60s }
+      - analysis:
+          templates:
+          - templateName: metric-analysis
+          args:
+          - name: service
+            value: api-canary
+          - name: metricWindow
+            value: 5m
+          - name: minSamples
+            value: "100"
+          - name: successRateThreshold
+            value: "0.99"
+          - name: latencyThreshold
+            value: "0.5"
+      - pause: { duration: 60s }
+      - setWeight: 100
+      - pause: { duration: 300s }

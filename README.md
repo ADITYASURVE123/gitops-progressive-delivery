@@ -1,9 +1,9 @@
 # GitOps Progressive Delivery Platform
 
 <p align="center">
-  <a href="https://github.com/ClaudCoding/gitops-progressive-delivery"><img src="https://img.shields.io/badge/GitHub-Repo-blue?style=flat-square" alt="GitHub Repository" /></a>
-  <a href="https://github.com/ClaudCoding/gitops-progressive-delivery/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/CI-Passing-brightgreen?style=flat-square" alt="CI Status" /></a>
-  <a href="https://goreportcard.com/report/github.com/ClaudCoding/gitops-progressive-delivery"><img src="https://goreportcard.com/badge/github.com/ClaudCoding/gitops-progressive-delivery?style=flat-square" alt="Go Report Card" /></a>
+  <a href="https://github.com/ADITYASURVE123/gitops-progressive-delivery"><img src="https://img.shields.io/badge/GitHub-Repo-blue?style=flat-square" alt="GitHub Repository" /></a>
+  <a href="https://github.com/ADITYASURVE123/gitops-progressive-delivery/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/CI-Passing-brightgreen?style=flat-square" alt="CI Status" /></a>
+  <a href="https://goreportcard.com/report/github.com/ADITYASURVE123/gitops-progressive-delivery"><img src="https://goreportcard.com/badge/github.com/ADITYASURVE123/gitops-progressive-delivery?style=flat-square" alt="Go Report Card" /></a>
 </p>
 
 ## Overview

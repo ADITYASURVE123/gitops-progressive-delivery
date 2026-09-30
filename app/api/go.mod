@@ -1,4 +1,4 @@
-module github.com/claudcoding/api-service
+module github.com/ADITYASURVE123/api-service
 
 go 1.21
 

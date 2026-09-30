@@ -4,9 +4,9 @@ pipeline {
     }
     
     environment {
-        REGISTRY = 'ghcr.io/claudcoding'
-        GIT_REPO = 'https://github.com/ClaudCoding/gitops-progressive-delivery'
-        GITOPS_REPO = 'https://github.com/ClaudCoding/gitops-progressive-delivery'
+        REGISTRY = 'ghcr.io/ADITYASURVE123'
+        GIT_REPO = 'https://github.com/ADITYASURVE123/gitops-progressive-delivery'
+        GITOPS_REPO = 'https://github.com/ADITYASURVE123/gitops-progressive-delivery'
     }
     
     stages {
@@ -60,7 +60,7 @@ pipeline {
                 sh 'echo "Updating GitOps manifests..."'
                 sh '''
                 git config --global user.name "jenkins"
-                git config --global user.email "jenkins@claudcoding.com"
+                git config --global user.email "jenkins@ADITYASURVE123.com"
                 
                 # Update production overlays with new image tags
                 sed -i "s/newTag: latest/newTag: \$(date +%Y%m%d%H%M%S)/g" gitops/overlays/prod/kustomization.yaml
@@ -96,7 +96,7 @@ pipeline {
         }
         failure {
             sh 'echo "Deployment failed!"'
-            mail to: 'dev-team@claudcoding.com', subject: "Build #${env.BUILD_NUMBER} Failed"
+            mail to: 'dev-team@ADITYASURVE123.com', subject: "Build #${env.BUILD_NUMBER} Failed'
         }
     }
 }

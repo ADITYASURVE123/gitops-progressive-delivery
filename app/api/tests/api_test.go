@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/claudcoding/api-service/src"
+	"github.com/ADITYASURVE123/api-service/src"
 )
 
 func TestHealthEndpoint(t *testing.T) {

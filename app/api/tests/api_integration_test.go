@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/claudcoding/api-service/src"
+	"github.com/ADITYASURVE123/api-service/src"
 )
 
 func TestIntegration_FullFlow(t *testing.T) {

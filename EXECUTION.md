@@ -35,7 +35,7 @@ This is a comprehensive, production-ready GitOps Progressive Delivery Platform t
 ## Step 1: Clone and Navigate
 ```bash
 cd /path/to/your/projects
-git clone https://github.com/ClaudCoding/gitops-progressive-delivery.git
+git clone https://github.com/ADITYASURVE123/gitops-progressive-delivery.git
 cd gitops-progressive-delivery
 ```
 
@@ -275,8 +275,8 @@ pipeline {
     }
     
     environment {
-        REGISTRY = 'ghcr.io/claudcoding'
-        GITOPS_REPO = 'https://github.com/ClaudCoding/gitops-progressive-delivery'
+        REGISTRY = 'ghcr.io/ADITYASURVE123'
+        GITOPS_REPO = 'https://github.com/ADITYASURVE123/gitops-progressive-delivery'
     }
     
     stages {
@@ -307,7 +307,7 @@ pipeline {
             steps {
                 sh '''
                 git config --global user.name "jenkins"
-                git config --global user.email "jenkins@claudcoding.com"
+                git config --global user.email "jenkins@ADITYASURVE123.com"
                 
                 # Update image tags in GitOps manifests
                 sed -i "s/newTag: latest/newTag: $(date +%Y%m%d%H%M%S)/g" gitops/overlays/prod/kustomization.yaml

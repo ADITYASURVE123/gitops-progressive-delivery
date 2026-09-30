@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: api
-        image: ghcr.io/claudcoding/api-service:latest-canary
+        image: ghcr.io/ADITYASURVE123/api-service:latest-canary
         ports:
         - containerPort: 8080
         env:
@@ -108,7 +108,7 @@ spec:
     spec:
       containers:
       - name: api
-        image: ghcr.io/claudcoding/api-service:latest-canary
+        image: ghcr.io/ADITYASURVE123/api-service:latest-canary
         ports:
         - containerPort: 8080
         env:

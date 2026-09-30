@@ -8,10 +8,10 @@ bases:
 
 images:
   - name: api-service
-    newName: ghcr.io/claudcoding/api-service
+    newName: ghcr.io/ADITYASURVE123/api-service
     newTag: latest
   - name: frontend-service
-    newName: ghcr.io/claudcoding/frontend-service
+    newName: ghcr.io/ADITYASURVE123/frontend-service
     newTag: latest
 
 resources:
@@ -27,7 +27,7 @@ patches:
     patch: |
       - op: replace
         path: /spec/template/spec/containers/0/image
-        value: ghcr.io/claudcoding/api-service:stable
+        value: ghcr.io/ADITYASURVE123/api-service:stable
 
   - target:
       kind: Deployment
@@ -35,7 +35,7 @@ patches:
     patch: |
       - op: replace
         path: /spec/template/spec/containers/0/image
-        value: ghcr.io/claudcoding/api-service:latest
+        value: ghcr.io/ADITYASURVE123/api-service:latest
 
   - target:
       kind: Deployment
@@ -43,7 +43,7 @@ patches:
     patch: |
       - op: replace
         path: /spec/template/spec/containers/0/image
-        value: ghcr.io/claudcoding/api-service:active
+        value: ghcr.io/ADITYASURVE123/api-service:active
 
   - target:
       kind: Deployment
@@ -51,7 +51,7 @@ patches:
     patch: |
       - op: replace
         path: /spec/template/spec/containers/0/image
-        value: ghcr.io/claudcoding/api-service:preview
+        value: ghcr.io/ADITYASURVE123/api-service:preview
 
   - target:
       kind: Deployment
@@ -59,7 +59,7 @@ patches:
     patch: |
       - op: replace
         path: /spec/template/spec/containers/0/image
-        value: ghcr.io/claudcoding/frontend-service:stable
+        value: ghcr.io/ADITYASURVE123/frontend-service:stable
 
   - target:
       kind: Deployment
@@ -67,7 +67,7 @@ patches:
     patch: |
       - op: replace
         path: /spec/template/spec/containers/0/image
-        value: ghcr.io/claudcoding/frontend-service:latest
+        value: ghcr.io/ADITYASURVE123/frontend-service:latest
 
   - target:
       kind: Deployment
@@ -75,7 +75,7 @@ patches:
     patch: |
       - op: replace
         path: /spec/template/spec/containers/0/image
-        value: ghcr.io/claudcoding/frontend-service:active
+        value: ghcr.io/ADITYASURVE123/frontend-service:active
 
   - target:
       kind: Deployment
@@ -83,7 +83,7 @@ patches:
     patch: |
       - op: replace
         path: /spec/template/spec/containers/0/image
-        value: ghcr.io/claudcoding/frontend-service:preview
+        value: ghcr.io/ADITYASURVE123/frontend-service:preview
 
 patchesStrategicMerge:
   - |
@@ -100,7 +100,7 @@ patchesStrategicMerge:
         spec:
           containers:
           - name: api
-            image: ghcr.io/claudcoding/api-service:latest
+            image: ghcr.io/ADITYASURVE123/api-service:latest
 
   - |
     apiVersion: argoproj.io/v1alpha1
@@ -116,7 +116,7 @@ patchesStrategicMerge:
         spec:
           containers:
           - name: api
-            image: ghcr.io/claudcoding/api-service:active
+            image: ghcr.io/ADITYASURVE123/api-service:active
 
   - |
     apiVersion: argoproj.io/v1alpha1
@@ -132,7 +132,7 @@ patchesStrategicMerge:
         spec:
           containers:
           - name: frontend
-            image: ghcr.io/claudcoding/frontend-service:latest
+            image: ghcr.io/ADITYASURVE123/frontend-service:latest
 
   - |
     apiVersion: argoproj.io/v1alpha1
@@ -148,4 +148,4 @@ patchesStrategicMerge:
         spec:
           containers:
           - name: frontend
-            image: ghcr.io/claudcoding/frontend-service:active
+            image: ghcr.io/ADITYASURVE123/frontend-service:active

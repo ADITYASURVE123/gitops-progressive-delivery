@@ -166,7 +166,7 @@ setup_components() {
 
     # Install Argo CD
     log_info "Installing Argo CD..."
-    kubectl apply -f https://github.com/argoproj/argo-cd/releases/download/v${ARGOCD_VERSION}/manifests/install.yaml
+    kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-cd/v${ARGOCD_VERSION}/manifests/install.yaml
     kubectl -n argocd wait deployment argocd-server --for condition=available --timeout=300s
 
     # Install Argo Rollouts
@@ -176,7 +176,6 @@ setup_components() {
 
     # Install Prometheus Stack
     log_info "Installing Prometheus Stack..."
-    kubectl create namespace monitoring
     kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/release-0.67/manifests/prometheus-operator.yaml
     kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/release-0.67/manifests/setup/prometheus-operator-crd.yaml
 
@@ -216,9 +215,6 @@ setup_gitops_manifests() {
     # Setup base manifests (simplified versions)
     log_info "Setting up base GitOps manifests..."
 
-    # Create base manifests directory
-    mkdir -p gitops/base
-
     # Create app-of-apps.yaml
     cat > gitops/apps/app-of-apps.yaml <<EOF
 apiVersion: argoproj.io/v1alpha1
@@ -249,7 +245,6 @@ spec:
 EOF
 
     # Create deployment examples
-    mkdir -p gitops/base
     cat > gitops/base/deployment.yaml <<EOF
 apiVersion: apps/v1
 kind: Deployment
@@ -400,31 +395,31 @@ verify_setup() {
     if kubectl -n argocd get deployment argocd-server --ignore-not-found >/dev/null 2>&1; then
         log_info "✅ Argo CD is running"
     else
-        warn "❌ Argo CD is not running"
+        log_warn "❌ Argo CD is not running"
     fi
 
     if kubectl -n argo-rollouts get deployment rollout-controller --ignore-not-found >/dev/null 2>&1; then
         log_info "✅ Argo Rollouts is running"
     else
-        warn "❌ Argo Rollouts is not running"
+        log_warn "❌ Argo Rollouts is not running"
     fi
 
     if kubectl -n monitoring get deployment prometheus-stack-prometheus --ignore-not-found >/dev/null 2>&1; then
         log_info "✅ Prometheus is running"
     else
-        warn "❌ Prometheus is not running"
+        log_warn "❌ Prometheus is not running"
     fi
 
     if kubectl -n monitoring get deployment grafana --ignore-not-found >/dev/null 2>&1; then
         log_info "✅ Grafana is running"
     else
-        warn "❌ Grafana is not running"
+        log_warn "❌ Grafana is not running"
     fi
 
     if kubectl -n app-monitoring get deployment api-service --ignore-not-found >/dev/null 2>&1; then
         log_info "✅ API Service is running"
     else
-        warn "❌ API Service is not running"
+        log_warn "❌ API Service is not running"
     fi
 
     log_info "Setup verification completed"
@@ -446,6 +441,29 @@ help() {
     echo "Environment variables:"
     echo "  CLUSTER_NAME     Name of the cluster (default: progressive-delivery)"
     echo "  K8S_VERSION      Kubernetes version (default: v1.28.0)"
+    echo ""
+}
+
+# Function to display completion message
+completion_message() {
+    log_info "Infrastructure setup completed!"
+    echo ""
+    echo "========================================="
+    echo "GitOps Progressive Delivery Platform Setup"
+    echo "========================================="
+    echo ""
+    echo "Next steps:"
+    echo "1. Access Argo CD: kubectl -n argocd port-forward svc/argocd-server 8080:80"
+    echo "2. Login with username: admin"
+    echo "3. Access Grafana: kubectl -n monitoring port-forward svc/prometheus-stack-grafana 3000:80"
+    echo "4. Login with username: admin, password: admin123"
+    echo "5. Access Prometheus: kubectl -n monitoring port-forward svc/prometheus-stack-prometheus 9090:9090"
+    echo ""
+    echo "Useful commands:"
+    echo "- View all resources: kubectl get all --all-namespaces"
+    echo "- Check Argo CD applications: kubectl get applications --all-namespaces"
+    echo "- Check rollouts: kubectl get rollouts --all-namespaces"
+    echo "- Port forward to API service: kubectl -n app-monitoring port-forward svc/api-service 8080:8080"
     echo ""
 }
 
@@ -497,29 +515,6 @@ main() {
             exit 1
             ;;
     esac
-}
-
-# Function to display completion message
-completion_message() {
-    log_info "Infrastructure setup completed!"
-    echo ""
-    echo "========================================="
-    echo "GitOps Progressive Delivery Platform Setup"
-    echo "========================================="
-    echo ""
-    echo "Next steps:"
-    echo "1. Access Argo CD: kubectl -n argocd port-forward svc/argocd-server 8080:80"
-    echo "2. Login with username: admin"
-    echo "3. Access Grafana: kubectl -n monitoring port-forward svc/prometheus-stack-grafana 3000:80"
-    echo "4. Login with username: admin, password: admin123"
-    echo "5. Access Prometheus: kubectl -n monitoring port-forward svc/prometheus-stack-prometheus 9090:9090"
-    echo ""
-    echo "Useful commands:"
-    echo "- View all resources: kubectl get all --all-namespaces"
-    echo "- Check Argo CD applications: kubectl get applications --all-namespaces"
-    echo "- Check rollouts: kubectl get rollouts --all-namespaces"
-    echo "- Port forward to API service: kubectl -n app-monitoring port-forward svc/api-service 8080:8080"
-    echo ""
 }
 
 # Run main function

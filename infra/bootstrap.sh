@@ -165,8 +165,6 @@ setup_components() {
 
     # Install Prometheus Stack
     log_info "Installing Prometheus Stack..."
-    kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/release-0.67/manifests/prometheus-operator.yaml
-    kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/release-0.67/manifests/setup/prometheus-operator-crd.yaml
 
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     helm repo update

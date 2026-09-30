@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: metric-analysis
+  namespace: default
+spec:
+  metrics:
+  - name: success-rate
+    provider:
+      prometheus:
+        address: http://prometheus-stack-prometheus.monitoring:9090
+        query: "sum(rate(http_requests_total{service=\"api-service\"}[1m])) / sum(rate(http_requests_total{service=\"api-service\"}[1m]) + rate(http_requests_errors_total{service=\"api-service\"}[1m])) or vector(0)"
+    threshold: "0.99"
+    interval: 30s
+  - name: error-rate
+    provider:
+      prometheus:
+        address: http://prometheus-stack-prometheus.monitoring:9090
+        query: "rate(http_requests_errors_total{service=\"api-service\"}[1m]) / rate(http_requests_total{service=\"api-service\"}[1m]) or vector(0)"
+    threshold: "0.01"
+    interval: 30s
+  - name: latency-p99
+    provider:
+      prometheus:
+        address: http://prometheus-stack-prometheus.monitoring:9090
+        query: "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{service=\"api-service\"}[1m])) or vector(0)"
+    threshold: "0.5"
+    interval: 30s
+  successCondition: "((success-rate >= 0.99) and (error-rate <= 0.01) and (latency-p99 <= 0.5))"
+  failureCondition: "((success-rate < 0.99) or (error-rate > 0.01) or (latency-p99 > 0.5))"
+  args:
+  - name: service
+    type: string
+    valueFrom:
+      arg:
+        name: service
+  - name: metricWindow
+    type: string
+    valueFrom:
+      arg:
+        name: metricWindow
+  - name: minSamples
+    type: string
+    valueFrom:
+      arg:
+        name: minSamples
+  - name: successRateThreshold
+    type: string
+    valueFrom:
+      arg:
+        name: successRateThreshold
+  - name: latencyThreshold
+    type: string
+    valueFrom:
+      arg:
+        name: latencyThreshold
+  template:
+    successCondition: "((success-rate >= 0.99) and (error-rate <= 0.01) and (latency-p99 <= 0.5))"
+    failureCondition: "((success-rate < 0.99) or (error-rate > 0.01) or (latency-p99 > 0.5))"
+    failureAction: "abort"

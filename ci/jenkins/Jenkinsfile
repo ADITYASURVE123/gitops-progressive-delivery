@@ -1,0 +1,102 @@
+pipeline {
+    agent {
+        label 'jenkins-agent'
+    }
+    
+    environment {
+        REGISTRY = 'ghcr.io/claudcoding'
+        GIT_REPO = 'https://github.com/ClaudCoding/gitops-progressive-delivery'
+        GITOPS_REPO = 'https://github.com/ClaudCoding/gitops-progressive-delivery'
+    }
+    
+    stages {
+        stage('Lint') {
+            steps {
+                sh 'echo "Running linting..."'
+                sh 'cd app/api && golangci-lint run'
+                sh 'cd app/frontend && npm run lint'
+            }
+        }
+        
+        stage('Unit Tests') {
+            steps {
+                sh 'echo "Running unit tests..."'
+                sh 'cd app/api && go test ./... -v -coverprofile=coverage.out'
+                sh 'cd app/frontend && npm test'
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                sh 'echo "Building services..."'
+                sh 'cd app/api && make build'
+                sh 'cd app/frontend && make build'
+            }
+        }
+        
+        stage('Security Scan') {
+            steps {
+                sh 'echo "Running security scans..."'
+                sh 'cd app/api && trivy fs --severity HIGH,CRITICAL . --exit-code 1 || true'
+                sh 'cd app/frontend && npm audit --audit-level high || true'
+            }
+        }
+        
+        stage('Push Images') {
+            steps {
+                sh 'echo "Pushing Docker images..."'
+                sh '''
+                docker build -t ${REGISTRY}/api-service:latest app/api/src
+                docker push ${REGISTRY}/api-service:latest
+                
+                docker build -t ${REGISTRY}/frontend-service:latest app/frontend
+                docker push ${REGISTRY}/frontend-service:latest
+                '''
+            }
+        }
+        
+        stage('Update GitOps') {
+            steps {
+                sh 'echo "Updating GitOps manifests..."'
+                sh '''
+                git config --global user.name "jenkins"
+                git config --global user.email "jenkins@claudcoding.com"
+                
+                # Update production overlays with new image tags
+                sed -i "s/newTag: latest/newTag: \$(date +%Y%m%d%H%M%S)/g" gitops/overlays/prod/kustomization.yaml
+                sed -i "s/newTag: dev-latest/newTag: \$(date +%Y%m%d%H%M%S)-dev/g" gitops/overlays/dev/kustomization.yaml
+                
+                git add gitops/overlays/prod/kustomization.yaml gitops/overlays/dev/kustomization.yaml
+                git commit -m "Update images for $(git rev-parse --short HEAD)"
+                git push origin main
+                '''
+            }
+        }
+        
+        stage('Deploy to GKE') {
+            steps {
+                sh 'echo "Deploying to Google Kubernetes Engine..."'
+                sh '''
+                # Wait for Argo CD to be ready
+                kubectl -n argocd wait deployment argocd-server --for condition=available --timeout=300s
+                
+                # Trigger sync from GitOps repository
+                argo cd sync app-of-apps
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            sh 'echo "Build completed: ${env.BUILD_NUMBER}"'
+        }
+        success {
+            sh 'echo "Deployment successful!"'
+        }
+        failure {
+            sh 'echo "Deployment failed!"'
+            mail to: 'dev-team@claudcoding.com', subject: "Build #${env.BUILD_NUMBER} Failed"
+        }
+    }
+}

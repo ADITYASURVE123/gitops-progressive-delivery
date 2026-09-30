@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: api-application
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ClaudCoding/gitops-progressive-delivery
+    targetRevision: main
+    path: gitops/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: app-monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        maxDuration: 60s
+  ignoreDifferences:
+    - group: argoproj.io
+      kind: Rollout
+      jsonPath: .spec.strategy.canary.steps[0].setWeight
+      # Skip weight comparison to avoid drift
+    - group: argoproj.io
+      kind: Rollout
+      jsonPath: .spec.strategy.canary.steps[1].setWeight
+      # Skip weight comparison to avoid drift
+    - group: argoproj.io
+      kind: Rollout
+      jsonPath: .spec.strategy.canary.steps[2].setWeight
+      # Skip weight comparison to avoid drift
+    - group: argoproj.io
+      kind: Rollout
+      jsonPath: .spec.strategy.canary.steps[3].setWeight
+      # Skip weight comparison to avoid drift
+    - group: argoproj.io
+      kind: Rollout
+      jsonPath: .spec.strategy.blueGreen.activeService
+      # Skip active service comparison
+    - group: argoproj.io
+      kind: Rollout
+      jsonPath: .spec.strategy.blueGreen.previewService
+      # Skip preview service comparison

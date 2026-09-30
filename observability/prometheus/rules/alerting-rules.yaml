@@ -1,0 +1,66 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: rollout-alerts
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  groups:
+  - name: rollout_alerts
+    interval: 30s
+    rules:
+    - alert: RolloutStuck
+      expr: |
+        (
+          argo_rollouts_template_metric_result_total{template="metric-analysis", result="success"}
+          or
+          argo_rollouts_template_metric_result_total{template="metric-analysis", result="failure"}
+        ) == 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Rollout analysis is stuck"
+        description: "No analysis results in the last 5 minutes for rollout {{ $labels.rollout }}"
+
+    - alert: RolloutFailed
+      expr: |
+        argo_rollouts_template_metric_result_total{template="metric-analysis", result="failure"} > 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Rollout analysis failed"
+        description: "Rollout {{ $labels.rollout }} analysis failed with metric {{ $labels.metric }}"
+
+    - alert: HighErrorRate
+      expr: |
+        rate(http_requests_errors_total{service="api-service"}[5m]) /
+        rate(http_requests_total{service="api-service"}[5m]) > 0.05
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High error rate detected"
+        description: "API service error rate is {{ $value | humanizePercentage }} for the last 5 minutes"
+
+    - alert: HighLatency
+      expr: |
+        histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{service="api-service"}[5m])) > 0.5
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High latency detected"
+        description: "API service p99 latency is {{ $value | humanizeDuration }} for the last 5 minutes"
+
+    - alert: RolloutAborted
+      expr: |
+        argo_rollouts_template_metric_result_total{template="metric-analysis", result="failure"} > 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Rollout was aborted"
+        description: "Rollout {{ $labels.rollout }} was automatically aborted due to metric breach"

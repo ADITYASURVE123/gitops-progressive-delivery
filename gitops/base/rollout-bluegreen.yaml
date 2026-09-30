@@ -1,0 +1,94 @@
+apiVersion: argoproj.io/v1beta1
+kind: Rollout
+metadata:
+  name: api-rollout-bluegreen
+  namespace: app-monitoring
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+        version: active
+    spec:
+      containers:
+      - name: api
+        image: ghcr.io/claudcoding/api-service:latest-active
+        ports:
+        - containerPort: 8080
+        env:
+        - name: FAIL_RATE
+          value: "0.0"
+        - name: PORT
+          value: "8080"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 3
+  strategy:
+    blueGreen:
+      activeService: api-active-service
+      previewService: api-preview-service
+      autoPromotionEnabled: false
+      steps:
+      - pause: { duration: 60s }
+      - analysis:
+          templates:
+          - templateName: metric-analysis
+          args:
+          - name: service
+            value: api-preview-service
+          - name: metricWindow
+            value: 5m
+          - name: minSamples
+            value: "100"
+          - name: successRateThreshold
+            value: "0.99"
+          - name: latencyThreshold
+            value: "0.5"
+        pause: { duration: 60s }
+      - promote: { enabled: true }
+      abortOnFailure: true
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: api
+        version: preview
+    spec:
+      containers:
+      - name: api
+        image: ghcr.io/claudcoding/api-service:latest-preview
+        ports:
+        - containerPort: 8080
+        env:
+        - name: FAIL_RATE
+          value: "0.0"
+        - name: PORT
+          value: "8080"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 3

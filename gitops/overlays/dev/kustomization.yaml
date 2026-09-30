@@ -1,0 +1,151 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: app-monitoring
+
+bases:
+  - ../../base
+
+images:
+  - name: api-service
+    newName: ghcr.io/claudcoding/api-service
+    newTag: dev-latest
+  - name: frontend-service
+    newName: ghcr.io/claudcoding/frontend-service
+    newTag: dev-latest
+
+resources:
+  - rollout-canary.yaml
+  - rollout-bluegreen.yaml
+  - api-application.yaml
+  - frontend-application.yaml
+
+patches:
+  - target:
+      kind: Deployment
+      name: api-stable
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: ghcr.io/claudcoding/api-service:dev-stable
+
+  - target:
+      kind: Deployment
+      name: api-canary
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: ghcr.io/claudcoding/api-service:dev-latest
+
+  - target:
+      kind: Deployment
+      name: api-bluegreen-active
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: ghcr.io/claudcoding/api-service:dev-active
+
+  - target:
+      kind: Deployment
+      name: api-bluegreen-preview
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: ghcr.io/claudcoding/api-service:dev-preview
+
+  - target:
+      kind: Deployment
+      name: frontend-stable
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: ghcr.io/claudcoding/frontend-service:dev-stable
+
+  - target:
+      kind: Deployment
+      name: frontend-canary
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: ghcr.io/claudcoding/frontend-service:dev-latest
+
+  - target:
+      kind: Deployment
+      name: frontend-bluegreen-active
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: ghcr.io/claudcoding/frontend-service:dev-active
+
+  - target:
+      kind: Deployment
+      name: frontend-bluegreen-preview
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: ghcr.io/claudcoding/frontend-service:dev-preview
+
+patchesStrategicMerge:
+  - |
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
+    metadata:
+      name: api-rollout-canary
+    spec:
+      template:
+        metadata:
+          labels:
+            app: api
+            version: canary
+        spec:
+          containers:
+          - name: api
+            image: ghcr.io/claudcoding/api-service:dev-latest
+
+  - |
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
+    metadata:
+      name: api-rollout-bluegreen
+    spec:
+      template:
+        metadata:
+          labels:
+            app: api
+            version: active
+        spec:
+          containers:
+          - name: api
+            image: ghcr.io/claudcoding/api-service:dev-active
+
+  - |
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
+    metadata:
+      name: frontend-rollout-canary
+    spec:
+      template:
+        metadata:
+          labels:
+            app: frontend
+            version: canary
+        spec:
+          containers:
+          - name: frontend
+            image: ghcr.io/claudcoding/frontend-service:dev-latest
+
+  - |
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
+    metadata:
+      name: frontend-rollout-bluegreen
+    spec:
+      template:
+        metadata:
+          labels:
+            app: frontend
+            version: active
+        spec:
+          containers:
+          - name: frontend
+            image: ghcr.io/claudcoding/frontend-service:dev-active

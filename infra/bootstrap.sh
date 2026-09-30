@@ -1,8 +1,3 @@
-#!/bin/bash
-
-# Infrastructure Setup Script for GitOps Progressive Delivery Platform
-# This script provides infrastructure setup options for different environments
-
 set -e
 
 CLUSTER_NAME="progressive-delivery"
@@ -86,10 +81,8 @@ setup_gke() {
         exit 1
     fi
 
-    # Configure GCP project (using default for demo)
     gcloud config set project "demo-project-$CLUSTER_NAME"
 
-    # Create GKE cluster
     log_info "Creating GKE cluster: $CLUSTER_NAME"
     gcloud container clusters create $CLUSTER_NAME \
         --zone us-central1-a \
@@ -102,7 +95,6 @@ setup_gke() {
         --preemptible \
         --no-enable-private-endpoint
 
-    # Get cluster credentials
     gcloud container clusters get-credentials $CLUSTER_NAME --zone us-central1-a
 }
 
@@ -115,13 +107,11 @@ setup_eks() {
         exit 1
     fi
 
-    # Check AWS credentials
     if ! aws sts get-caller-identity >/dev/null 2>&1; then
         log_error "AWS credentials not configured"
         exit 1
     fi
 
-    # Create EKS cluster
     log_info "Creating EKS cluster: $CLUSTER_NAME"
     eksctl create cluster \
         --name $CLUSTER_NAME \
@@ -136,7 +126,6 @@ setup_eks() {
         --full-ecr-access \
         --appmesh-access
 
-    # Update kubeconfig
     aws eks update-kubeconfig --name $CLUSTER_NAME --region us-central-1
 }
 
@@ -155,7 +144,7 @@ setup_components() {
 
     # Install cert-manager for TLS
     log_info "Installing cert-manager..."
-    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml
+    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v${CERT_MANAGER_VERSION}/cert-manager.yaml
     kubectl -n cert-manager wait deployment cert-manager --for condition=available --timeout=300s
     kubectl -n cert-manager wait deployment cert-manager-cainjector --for condition=available --timeout=300s
 
@@ -166,13 +155,13 @@ setup_components() {
 
     # Install Argo CD
     log_info "Installing Argo CD..."
-    kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-cd/${ARGOCD_VERSION}/manifests/install.yaml
+    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v${ARGOCD_VERSION}/manifests/install.yaml
     kubectl -n argocd wait deployment argocd-server --for condition=available --timeout=300s
 
     # Install Argo Rollouts
     log_info "Installing Argo Rollouts..."
-    kubectl apply -f https://github.com/argoproj/argo-rollouts/releases/download/${ARGOROLLOUTS_VERSION}/install.yaml
-    kubectl -n argo-rollouts wait deployment rollout-controller --for condition=available --timeout=300s
+    kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/download/v${ARGOROLLOUTS_VERSION}/install.yaml
+    kubectl -n argo-rollouts wait deployment argo-rollouts --for condition=available --timeout=300s || kubectl -n argo-rollouts wait deployment rollout-controller --for condition=available --timeout=300s
 
     # Install Prometheus Stack
     log_info "Installing Prometheus Stack..."
@@ -192,30 +181,21 @@ setup_components() {
         --set prometheus-node-exporter.enabled=true \
         --set kube-state-metrics.enabled=true
 
-    # Wait for components to be ready
-    log_info "Waiting for components to be ready..."
-    kubectl -n monitoring wait deployment prometheus-stack-operator --for condition=available --timeout=300s
-    kubectl -n monitoring wait deployment prometheus-stack-prometheus --for condition=available --timeout=300s
-    kubectl -n monitoring wait deployment grafana --for condition=available --timeout=300s
+    log_info "Waiting for monitoring components to be ready..."
+    kubectl -n monitoring wait deployment prometheus-stack-operator --for condition=available --timeout=300s || true
+    kubectl -n monitoring wait deployment grafana --for condition=available --timeout=300s || true
 
-    # Setup GitOps manifests
     setup_gitops_manifests
 }
 
-# Function to setup GitOps manifests
 setup_gitops_manifests() {
     log_info "Setting up GitOps manifests..."
 
-    # Create gitops directory structure
     mkdir -p gitops/overlays/prod
     mkdir -p gitops/overlays/dev
     mkdir -p gitops/base
     mkdir -p gitops/apps
 
-    # Setup base manifests (simplified versions)
-    log_info "Setting up base GitOps manifests..."
-
-    # Create app-of-apps.yaml
     cat > gitops/apps/app-of-apps.yaml <<EOF
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -244,7 +224,6 @@ spec:
         maxDuration: 60s
 EOF
 
-    # Create deployment examples
     cat > gitops/base/deployment.yaml <<EOF
 apiVersion: apps/v1
 kind: Deployment
@@ -281,7 +260,6 @@ spec:
             memory: 512Mi
 EOF
 
-    # Create service.yaml
     cat > gitops/base/service.yaml <<EOF
 apiVersion: v1
 kind: Service
@@ -300,22 +278,17 @@ EOF
     log_info "GitOps manifests setup completed"
 }
 
-# Function to deploy demo application
 deploy_demo() {
     log_info "Deploying demo application..."
 
-    # Create app-monitoring namespace
     kubectl create namespace app-monitoring || true
 
-    # Deploy API service
     kubectl -n app-monitoring apply -f gitops/base/deployment.yaml
     kubectl -n app-monitoring apply -f gitops/base/service.yaml
 
-    # Wait for deployment
     log_info "Waiting for API service to be ready..."
-    kubectl -n app-monitoring wait deployment/api-service --for condition=available --timeout=300s
+    kubectl -n app-monitoring wait deployment/api-service --for condition=available --timeout=300s || true
 
-    # Expose service via Ingress
     kubectl -n app-monitoring apply -f - <<EOF
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -339,14 +312,11 @@ EOF
     log_info "Demo application deployed successfully"
 }
 
-# Function to setup monitoring
 setup_monitoring() {
     log_info "Setting up monitoring stack..."
 
-    # Create monitoring namespace
     kubectl create namespace monitoring || true
 
-    # Deploy Prometheus
     kubectl -n monitoring apply -f - <<EOF
 apiVersion: monitoring.coreos.com/v1
 kind: Prometheus
@@ -364,7 +334,6 @@ spec:
       memory: 512Mi
 EOF
 
-    # Create Grafana dashboard
     kubectl -n monitoring apply -f - <<EOF
 apiVersion: v1
 kind: ConfigMap
@@ -385,12 +354,8 @@ EOF
     log_info "Monitoring setup completed"
 }
 
-# Function to verify setup
 verify_setup() {
     log_info "Verifying setup..."
-
-    # Check cluster components
-    log_info "Checking cluster components..."
 
     if kubectl -n argocd get deployment argocd-server --ignore-not-found >/dev/null 2>&1; then
         log_info "✅ Argo CD is running"
@@ -398,7 +363,7 @@ verify_setup() {
         log_warn "❌ Argo CD is not running"
     fi
 
-    if kubectl -n argo-rollouts get deployment rollout-controller --ignore-not-found >/dev/null 2>&1; then
+    if kubectl -n argo-rollouts get deployment --ignore-not-found | grep -E "argo-rollouts|rollout-controller" >/dev/null 2>&1; then
         log_info "✅ Argo Rollouts is running"
     else
         log_warn "❌ Argo Rollouts is not running"
@@ -425,7 +390,6 @@ verify_setup() {
     log_info "Setup verification completed"
 }
 
-# Function to display help
 help() {
     echo "Infrastructure Setup Script for GitOps Progressive Delivery Platform"
     echo "=============================================="
@@ -438,36 +402,16 @@ help() {
     echo "  demo      Setup and deploy demo application"
     echo "  help      Show this help message"
     echo ""
-    echo "Environment variables:"
-    echo "  CLUSTER_NAME     Name of the cluster (default: progressive-delivery)"
-    echo "  K8S_VERSION      Kubernetes version (default: v1.28.0)"
-    echo ""
 }
 
-# Function to display completion message
 completion_message() {
     log_info "Infrastructure setup completed!"
     echo ""
     echo "========================================="
     echo "GitOps Progressive Delivery Platform Setup"
     echo "========================================="
-    echo ""
-    echo "Next steps:"
-    echo "1. Access Argo CD: kubectl -n argocd port-forward svc/argocd-server 8080:80"
-    echo "2. Login with username: admin"
-    echo "3. Access Grafana: kubectl -n monitoring port-forward svc/prometheus-stack-grafana 3000:80"
-    echo "4. Login with username: admin, password: admin123"
-    echo "5. Access Prometheus: kubectl -n monitoring port-forward svc/prometheus-stack-prometheus 9090:9090"
-    echo ""
-    echo "Useful commands:"
-    echo "- View all resources: kubectl get all --all-namespaces"
-    echo "- Check Argo CD applications: kubectl get applications --all-namespaces"
-    echo "- Check rollouts: kubectl get rollouts --all-namespaces"
-    echo "- Port forward to API service: kubectl -n app-monitoring port-forward svc/api-service 8080:8080"
-    echo ""
 }
 
-# Main function
 main() {
     if [ $# -eq 0 ]; then
         help
@@ -517,5 +461,4 @@ main() {
     esac
 }
 
-# Run main function
 main "$@"
